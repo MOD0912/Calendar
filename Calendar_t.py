@@ -13,8 +13,12 @@ class Kalendar(ctk.CTkFrame):
         self.date_labels = []  # Store references to date labels for text updates only
         self.date_buttons_created = False  # Track if buttons have been created
         self.to_do_frame = None  # Track the current to-do frame
-        with open("data.json", "r") as f:
-            self.todos = json.load(f)
+        try:
+            with open("todo.json", "r") as f:
+                self.todos = json.load(f)
+        except FileNotFoundError:
+            self.todos = {}
+
         print(self.todos)
         self.create_widgets()
     
@@ -175,21 +179,24 @@ __________________________________
         if self.to_do_frame is None:
             return  # Nothing to save if frame doesn't exist
         try:
-            self.textbox_content = self.textbox.get("0.0", "end-1c")
-            if self.textbox_content.strip():  # Only save if there's text
+            self.textbox_content = self.textbox.get("0.0", "end-1c").strip()
                 # Extract date and month from the label text
-                label_text = self.label.cget("text")
-                parts = label_text.split()
-                if len(parts) >= 4:
-                    month_name = parts[2]
-                    date_str = parts[3].rstrip(":")
-                    try:
-                        month = self.months.index(month_name) + 1  # Convert month name to month number
-                        date = int(date_str)
-                        self.todos[f"{month} {date}"] = self.textbox_content
-                        print(f"Saved To-Do for {month_name} {date}: {self.textbox_content}")
-                    except ValueError:
-                        print("Error parsing date or month.")
+            label_text = self.label.cget("text")
+            parts = label_text.split()
+            if len(parts) >= 4:
+                month_name = parts[2]
+                date_str = parts[3].rstrip(":")
+                try:
+                    month = self.months.index(month_name) + 1  # Convert month name to month number
+                    date = int(date_str)
+                    if self.textbox_content == "":
+                        if f"{month} {date}" in self.todos:
+                            del self.todos[f"{month} {date}"]  # Remove empty to-dos
+                            print(f"Removed To-Do for {month_name} {date}")
+                    self.todos[f"{month} {date}"] = self.textbox_content
+                    print(f"Saved To-Do for {month_name} {date}: {self.textbox_content}")
+                except ValueError:
+                    print("Error parsing date or month.")
 
         except Exception as e:
             print("Error saving To-Do:", e)
@@ -197,7 +204,7 @@ __________________________________
 def on_exit():
     if kalendar.to_do_frame is not None:
         kalendar.save_todo()
-    with open("data.json", "w") as f:
+    with open("todo.json", "w") as f:
         json.dump(kalendar.todos, f)
     exit()
 
