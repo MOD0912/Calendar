@@ -1,6 +1,7 @@
 import Rainbowborder
 import customtkinter as ctk
 import calendar
+import datetime
 import json 
 class Kalendar(ctk.CTkFrame):
     def __init__(self, master, corner_radius=10, fg_color="#1f1f1f"):
@@ -9,7 +10,8 @@ class Kalendar(ctk.CTkFrame):
         self.columnconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), weight=1)
         self.months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
         self.todos = {}  # Dictionary to store to-dos with (month, date) as keys
-        self.current_month = 12  # December is month 12, not 11
+        self.current_month = datetime.datetime.now().month
+        self.current_day = datetime.datetime.now().day
         self.date_labels = []  # Store references to date labels for text updates only
         self.date_buttons_created = False  # Track if buttons have been created
         self.to_do_frame = None  # Track the current to-do frame
@@ -30,7 +32,7 @@ class Kalendar(ctk.CTkFrame):
         self.Month_frame.grid(row=1, column=4, columnspan=3, sticky="ew")
         self.Month_frame.rowconfigure(0, weight=1)
         self.Month_frame.columnconfigure((0, 1, 2), weight=1)
-        self.Month_Label = ctk.CTkLabel(self.Month_frame, text="December", font=ctk.CTkFont(size=30, weight="bold"))
+        self.Month_Label = ctk.CTkLabel(self.Month_frame, text=self.months[self.current_month - 1], font=ctk.CTkFont(size=30, weight="bold"))
         self.Month_Label.grid(row=0, column=1, pady=10, padx=10)
         self.Month_right = ctk.CTkButton(self.Month_frame, text=">", fg_color="#2b2b2b", width=30, height=30, corner_radius=15, font=ctk.CTkFont(size=40, weight="bold"), command=lambda: self.change_month(1))
         self.Month_right.grid(row=0, column=2, sticky="e", padx=5, pady=5)
@@ -72,6 +74,7 @@ class Kalendar(ctk.CTkFrame):
                         height=30,  # Fixed height
                         fg_color="#2b2b2b",
                     )
+                    
                     date_textbox.grid(row=week_num + 1, column=day_num, padx=5, pady=5, sticky="nsew")
                     date_textbox.bind("<Button-1>", lambda e, r=week_num, c=day_num: self.button_clicked(r, c))
                     week_buttons.append(date_textbox)
@@ -85,6 +88,10 @@ class Kalendar(ctk.CTkFrame):
                 button = self.date_labels[week_num][day_num]
                 button.configure(state="normal")  # Enable button to update text
                 button.delete("0.0", "end")  # Clear existing text
+                if date == self.current_day and self.current_month == datetime.datetime.now().month:
+                    button.configure(fg_color="#3b3b3b")  # Highlight current day
+                else:
+                    button.configure(fg_color="#2b2b2b")
                 if date == 0:
                     button.configure(fg_color="#2b2b2b")
                 else:
@@ -94,13 +101,16 @@ __________________________________
 {self.todos.get(f"{self.current_month} {date}", "")}
                                   ''')
                     
+                    
                 button.configure(state="disabled")
         
         # Hide buttons for weeks not needed this month
         for week_num in range(len(month_calendar), 6):
             for day_num in range(7):
                 button = self.date_labels[week_num][day_num]
-                button.configure(fg_color="#2b2b2b")
+                button.configure(state="normal")  # Enable button to clear text
+                button.delete("0.0", "end")  # Clear existing text
+                button.configure(fg_color="#2b2b2b", state="disabled")
         
         self.to_do_frame = ctk.CTkFrame(self, height=200, fg_color="#2b2b2b", corner_radius=20)
         
